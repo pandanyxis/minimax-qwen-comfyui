@@ -36,7 +36,7 @@ export JUPYTER_TOKEN
   --ServerApp.root_dir=/workspace &
 pids+=("$!")
 /opt/venv/bin/python main.py --listen 0.0.0.0 --port 8188 \
-  --disable-dynamic-vram --preview-method taesd \
+  --disable-dynamic-vram --preview-method auto \
   --base-directory /workspace/ComfyUI \
   --extra-model-paths-config /workspace/combined/model-paths.yaml &
 pids+=("$!")
