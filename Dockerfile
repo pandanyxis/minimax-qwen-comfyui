@@ -26,7 +26,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
     libgl1 libglib2.0-0 build-essential \
     && rm -rf /var/lib/apt/lists/* /etc/ssh/ssh_host_*
 RUN python3 -m venv /opt/venv \
-    && /opt/venv/bin/pip install --no-cache-dir torch==2.13.0 torchvision==0.28.0 torchaudio==2.13.0 --index-url https://download.pytorch.org/whl/cu130
+    && /opt/venv/bin/pip install --no-cache-dir torch==2.13.0 torchvision==0.28.0 --index-url https://download.pytorch.org/whl/cu130
 ENV PIP_CONSTRAINT=/opt/combined/torch-constraints.txt
 COPY torch-constraints.txt comfy-sources.json bake-comfy.py /opt/combined/
 RUN /opt/venv/bin/python /opt/combined/bake-comfy.py \
