@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-DEFAULT_IMAGE = 'ghcr.io/pandanyxis/minimax-qwen-comfyui:comfy-v1.4'
+DEFAULT_IMAGE = 'ghcr.io/pandanyxis/minimax-qwen-comfyui:comfy-v1.5'
 
 
 def make(image=DEFAULT_IMAGE):
