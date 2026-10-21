@@ -7,3 +7,5 @@ test-pod.json
 *.pem
 *.key
 access.json
+
+hf-mirror-config.json

@@ -21,6 +21,10 @@ def verified(path, model):
 def provision(models_root):
     models_root = Path(models_root)
     models = json.loads((ASSETS / 'civitai-models.json').read_text(encoding='utf-8'))
+    mirror_repo = os.environ.get('HF_CIVITAI_MIRROR_REPO', '').strip()
+    mirror_revision = os.environ.get('HF_CIVITAI_MIRROR_REVISION', '').strip()
+    if mirror_repo and (len(mirror_revision) != 40 or any(c not in '0123456789abcdef' for c in mirror_revision)):
+        raise ValueError('Pin HF_CIVITAI_MIRROR_REVISION to the verified 40-character commit SHA')
     extras = [entry.strip() for entry in os.environ.get(
         'CIVITAI_DIFFUSION_MODELS', '').split(',') if entry.strip()]
     status = {m['name']: 'pending' for m in models}
@@ -31,9 +35,15 @@ def provision(models_root):
         target.parent.mkdir(parents=True, exist_ok=True)
         if not verified(target, model):
             # Token stays in the environment; never put credentials in arguments.
-            result = subprocess.run([
-                sys.executable, DOWNLOADER, '--identifier', model['identifier'],
-                '--output', str(target.parent), '--filename', model['name']])
+            if mirror_repo:
+                command = ['/opt/hf/bin/python', str(ASSETS / 'download-mirror.py'),
+                           '--repo', mirror_repo, '--revision', mirror_revision,
+                           '--path', model['subdir'] + '/' + model['name'],
+                           '--root', str(models_root)]
+            else:
+                command = [sys.executable, DOWNLOADER, '--identifier', model['identifier'],
+                           '--output', str(target.parent), '--filename', model['name']]
+            result = subprocess.run(command)
             if result.returncode != 0 or not verified(target, model):
                 status[model['name']] = 'failed'
                 STATUS.write_text(json.dumps(status), encoding='utf-8')

@@ -44,7 +44,7 @@ COPY supervisor.py healthcheck.py bootstrap.py start-prebuilt.py cpu-smoke.py /o
 COPY start-comfy.sh /opt/combined/start-comfy.sh
 COPY workflow-*.json /opt/combined/
 COPY civitai-models.json provision-civitai.py download-civitai.py provision-helpers.py /opt/combined/
-COPY model-manifest.json download_progress.py download-qwen.py /opt/combined/
+COPY model-manifest.json download_progress.py download-qwen.py download-mirror.py mirror-to-hf.py /opt/combined/
 RUN --mount=from=builder,source=/opt/cuda-link,target=/opt/cuda-link \
     chmod +x /usr/local/bin/start-qwen /usr/local/bin/start-services.sh \
     && bash -n /usr/local/bin/start-qwen /usr/local/bin/start-services.sh /opt/combined/start-comfy.sh \

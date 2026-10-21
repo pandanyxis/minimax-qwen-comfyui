@@ -10,3 +10,5 @@ github.json
 *.key
 *.pem
 access.json
+
+hf-mirror-config.json
