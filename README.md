@@ -1,5 +1,7 @@
 # Pandanyxis - MiniMax + Qwen
 
+Project owner and maintainer: [pandanyxis](https://github.com/pandanyxis).
+
 Prebuilt ComfyUI T2V/I2V, Qwen vision chat and Open WebUI on one Runpod GPU.
 
 ## v1.0: temporary storage only
