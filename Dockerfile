@@ -54,6 +54,8 @@ ENV ENABLE_COMFYUI=true ENABLE_QWEN=true ENABLE_WEBUI=true CTX_SIZE=65536 \
     COMFY_START_SCRIPT=/opt/combined/start-comfy.sh \
     HF_HOME=/workspace/qwen-runpod/hf-cache HF_XET_HIGH_PERFORMANCE=1 \
     HF_XET_NUM_CONCURRENT_RANGE_GETS=32 HF_HUB_DOWNLOAD_TIMEOUT=60 HF_HUB_DISABLE_UPDATE_CHECK=1
+ENV HF_CIVITAI_MIRROR_REPO=Pandanyxis/comfyui-civitai-models \
+    HF_CIVITAI_MIRROR_REVISION=b102a78d81a88ef84b187528cd1f0f92362b3644
 WORKDIR /workspace
 EXPOSE 8188 8080 3000 8888 22
 HEALTHCHECK --interval=30s --timeout=15s --start-period=90m --retries=3 CMD ["/usr/bin/python3", "/opt/combined/healthcheck.py"]
