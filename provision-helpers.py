@@ -6,6 +6,7 @@ import time
 from contextlib import contextmanager
 from pathlib import Path
 from huggingface_hub import hf_hub_download
+from download_progress import LogProgress
 
 ASSETS = Path(__file__).resolve().parent
 SOURCES = {
@@ -59,8 +60,9 @@ def main():
             local = root / Path(name).parent if remote != name else root
             status[name]['status'] = 'downloading'
             status_path.write_text(json.dumps(status))
-            with phase(f'Downloading {name} from {repo}'):
-                hf_hub_download(repo, remote, revision=revision, local_dir=local, force_download=target.exists())
+            print(f'[models] Downloading {name} from {repo}', flush=True)
+            hf_hub_download(repo, remote, revision=revision, local_dir=local,
+                            force_download=target.exists(), tqdm_class=LogProgress)
             if not valid():
                 raise ValueError('Helper weight failed verification: ' + name)
         status[name]['status'] = 'done'

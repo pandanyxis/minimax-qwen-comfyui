@@ -8,6 +8,7 @@ import time
 from urllib.parse import parse_qs, urlparse
 
 import requests
+from download_progress import progress_line
 
 
 def resolve(identifier, session):
@@ -75,6 +76,11 @@ def download(identifier, output, filename=None):
         received = offset if append else 0
         remaining = int(response.headers.get('Content-Length', 0))
         total = remaining + received if remaining else 0
+        content_range = response.headers.get('Content-Range', '')
+        if append and '/' in content_range:
+            size = content_range.rsplit('/', 1)[1]
+            if size.isdigit():
+                total = int(size)
         started = last_report = time.monotonic()
         initial = received
         print(f'[models] Downloading {name}; starting at {received / 1024**3:.2f} GiB', flush=True)
@@ -84,10 +90,11 @@ def download(identifier, output, filename=None):
                 received += len(chunk)
                 now = time.monotonic()
                 if now - last_report >= 15:
-                    progress = f'{received / total:.1%}' if total else 'total unknown'
-                    speed = (received - initial) / max(now - started, 0.001) / 1024**2
-                    print(f'[models] {name}: {received / 1024**3:.2f} GiB ({progress}), {speed:.1f} MiB/s', flush=True)
+                    print(progress_line(name, received, total, now - started,
+                                        received - initial), flush=True)
                     last_report = now
+    print(progress_line(name, received, total, time.monotonic() - started,
+                        received - initial), flush=True)
     print(f'[models] Download complete: {name}; checking SHA-256...', flush=True)
     with partial.open('rb') as stream:
         valid = hashlib.file_digest(stream, 'sha256').hexdigest() == digest

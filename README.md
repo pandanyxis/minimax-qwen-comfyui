@@ -22,7 +22,7 @@ The personal T2V and I2V variants use either:
 
 Exact filenames, sizes and SHA-256 hashes are pinned in `civitai-models.json`. The Mystic v5 FL2VA LoRA is downloaded and remains disabled until selected. Both workflows retain the Qwen3-VL text encoder, audio/video VAEs, TAE preview and 8-step Turbo LoRA. The independent Qwen chat model and vision projector are separate from the MiniMax text encoder.
 
-The workflows use six left-to-right groups: **Invoer → Modellen → LoRA’s en preview → Generatie → Sampling → Video-uitvoer**. Change your prompt, image, resolution and duration in group 1. Add style LoRAs in group 3; use Save As for your own variants. `layout-workflows.py` reapplies this layout without changing model settings or node connections.
+The workflows use six left-to-right groups: **Invoer â†’ Modellen â†’ LoRAâ€™s en preview â†’ Generatie â†’ Sampling â†’ Video-uitvoer**. Change your prompt, image, resolution and duration in group 1. Add style LoRAs in group 3; use Save As for your own variants. `layout-workflows.py` reapplies this layout without changing model settings or node connections.
 
 Use the explicitly named `workflow-{text,image}-to-video-civitai-{minimax,eros}-int8.json` variants. They are available in the personal workflow folders. Select your own input image for I2V. Notes are neutral workflow instructions; no upstream welcome/report workflow is generated. Existing edited personal copies are preserved by the personal installer.
 
@@ -95,4 +95,4 @@ Template changes apply to new Pods. Generate a template with `python make_templa
 
 Model weights are downloaded at startup and remain subject to their upstream licenses and access requirements. The independent image must pass its build and CPU startup checks before deployment; GPU video generation requires a separate real Pod test.
 
-Startup logs label ComfyUI phases with `[comfy]` and Qwen phases with `[qwen]`. Helper-model logs show the file number, expected size, download/checksum phase and a heartbeat every 15 seconds during long operations. Civitai transfers report received GiB, percentage when the server supplies a total, and average MiB/s approximately every 15 seconds while chunks arrive. Service readiness is confirmed by the server listening messages.
+Startup logs label ComfyUI phases with `[comfy]` and Qwen phases with `[qwen]`. Hugging Face/Xet and Civitai downloads show transferred/total GiB, percentage, average MiB/s and estimated remaining seconds approximately every 15 seconds while transfer updates arrive. Hugging Face reports both file reconstruction and network transfer using its own byte counters; these can differ with Xet caching/compression. Missing totals or zero speed show an unknown total or calculating ETA. SHA-256 checks have a separate heartbeat. Service readiness is confirmed by server listening messages.
