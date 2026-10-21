@@ -2,6 +2,8 @@
 import argparse
 import hashlib
 import os
+import socket
+import ssl
 from pathlib import Path
 import sys
 import time
@@ -42,8 +44,12 @@ def resolve(identifier, session):
     return next((f for f in files if f.get('primary')), files[0])
 
 
-def download(identifier, output, filename=None):
-    session = requests.Session()
+def download_once(identifier, output, filename=None):
+    with requests.Session() as session:
+        return download_with_session(identifier, output, filename, session)
+
+
+def download_with_session(identifier, output, filename, session):
     token = os.environ.get('CIVITAI_TOKEN') or os.environ.get('civitai_token')
     if token:
         session.headers['Authorization'] = 'Bearer ' + token
@@ -103,6 +109,53 @@ def download(identifier, output, filename=None):
         raise ValueError('Downloaded file checksum mismatch')
     partial.replace(target)
     print('[models] Verified ' + target.name, flush=True)
+
+
+TRANSIENT_HTTP = {408, 429, 500, 502, 503, 504}
+
+
+def error_category(error):
+    # Inspect types only: exception messages can expose tokens or signed URLs.
+    pending, seen = [error], set()
+    while pending:
+        current = pending.pop()
+        if id(current) in seen:
+            continue
+        seen.add(id(current))
+        if isinstance(current, socket.gaierror):
+            return 'DNS lookup failed'
+        if isinstance(current, (ssl.SSLError, requests.exceptions.SSLError)):
+            return 'TLS connection failed'
+        pending.extend(x for x in (getattr(current, '__cause__', None),
+                                  getattr(current, '__context__', None),
+                                  getattr(current, 'reason', None)) if isinstance(x, BaseException))
+        pending.extend(x for x in current.args if isinstance(x, BaseException))
+    if isinstance(error, requests.HTTPError) and error.response is not None:
+        return f'HTTP {error.response.status_code}'
+    return type(error).__name__
+
+
+def download(identifier, output, filename=None):
+    attempt = 0
+    while True:
+        try:
+            return download_once(identifier, output, filename)
+        except requests.HTTPError as error:
+            if error.response is None or error.response.status_code not in TRANSIENT_HTTP:
+                raise
+            delay = min(5 * 2 ** min(attempt, 4), 60)
+            retry_after = error.response.headers.get('Retry-After', '')
+            if retry_after.isdigit():
+                delay = max(delay, min(int(retry_after), 300))
+            category = error_category(error)
+        except (requests.ConnectionError, requests.Timeout,
+                requests.exceptions.ChunkedEncodingError) as error:
+            delay = min(5 * 2 ** min(attempt, 4), 60)
+            category = error_category(error)
+        attempt += 1
+        print(f'[models] Civitai temporary failure: {category}; retry {attempt} in {delay}s. '
+              'Partial downloads are kept; other services remain running.', flush=True)
+        time.sleep(delay)
 
 
 if __name__ == '__main__':
