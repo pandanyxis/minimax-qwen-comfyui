@@ -4,13 +4,15 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-DEFAULT_IMAGE = 'ghcr.io/pandanyxis/minimax-qwen-comfyui:comfy-v1.0'
+DEFAULT_IMAGE = 'ghcr.io/pandanyxis/minimax-qwen-comfyui:comfy-v1.4'
 
 
 def make(image=DEFAULT_IMAGE):
     env = {
         'ENABLE_COMFYUI': 'true', 'ENABLE_QWEN': 'true', 'ENABLE_WEBUI': 'true',
         'CTX_SIZE': '65536',
+        'HF_CIVITAI_MIRROR_REPO': 'Pandanyxis/comfyui-civitai-models',
+        'HF_CIVITAI_MIRROR_REVISION': 'b102a78d81a88ef84b187528cd1f0f92362b3644',
         'HF_XET_HIGH_PERFORMANCE': '1', 'HF_XET_NUM_CONCURRENT_RANGE_GETS': '32',
         'REQUIRE_MINIMAX_DOWNLOADS': 'true',
         'CIVITAI_CHECKPOINTS': '', 'CIVITAI_LORAS': '',
