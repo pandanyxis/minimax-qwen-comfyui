@@ -4,6 +4,7 @@ import hashlib
 import os
 from pathlib import Path
 import sys
+import time
 from urllib.parse import parse_qs, urlparse
 
 import requests
@@ -45,6 +46,7 @@ def download(identifier, output, filename=None):
     token = os.environ.get('CIVITAI_TOKEN') or os.environ.get('civitai_token')
     if token:
         session.headers['Authorization'] = 'Bearer ' + token
+    print('[models] Resolving Civitai file metadata...', flush=True)
     item = resolve(identifier, session)
     name = filename or item['name']
     if Path(name).name != name or '/' in name or '\\' in name:
@@ -54,9 +56,12 @@ def download(identifier, output, filename=None):
     digest = item.get('hashes', {}).get('SHA256', '').lower()
     if not digest:
         raise ValueError('Civitai file has no SHA256 metadata')
+    print('[models] Preparing Civitai file: ' + name, flush=True)
     if target.is_file():
+        print('[models] Checking existing SHA-256: ' + name, flush=True)
         with target.open('rb') as stream:
             if hashlib.file_digest(stream, 'sha256').hexdigest() == digest:
+                print('[models] Already verified: ' + name, flush=True)
                 return
     partial = target.with_name(target.name + '.part')
     offset = partial.stat().st_size if partial.exists() else 0
@@ -67,9 +72,23 @@ def download(identifier, output, filename=None):
         append = offset and response.status_code == 206
         if append and not response.headers.get('Content-Range', '').startswith(f'bytes {offset}-'):
             raise ValueError('Unexpected download range')
+        received = offset if append else 0
+        remaining = int(response.headers.get('Content-Length', 0))
+        total = remaining + received if remaining else 0
+        started = last_report = time.monotonic()
+        initial = received
+        print(f'[models] Downloading {name}; starting at {received / 1024**3:.2f} GiB', flush=True)
         with partial.open('ab' if append else 'wb') as stream:
             for chunk in response.iter_content(8 * 1024 * 1024):
                 stream.write(chunk)
+                received += len(chunk)
+                now = time.monotonic()
+                if now - last_report >= 15:
+                    progress = f'{received / total:.1%}' if total else 'total unknown'
+                    speed = (received - initial) / max(now - started, 0.001) / 1024**2
+                    print(f'[models] {name}: {received / 1024**3:.2f} GiB ({progress}), {speed:.1f} MiB/s', flush=True)
+                    last_report = now
+    print(f'[models] Download complete: {name}; checking SHA-256...', flush=True)
     with partial.open('rb') as stream:
         valid = hashlib.file_digest(stream, 'sha256').hexdigest() == digest
     if not valid:

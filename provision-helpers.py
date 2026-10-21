@@ -1,6 +1,9 @@
 """Download the five workflow helper weights from their original repositories."""
 import hashlib
 import json
+import threading
+import time
+from contextlib import contextmanager
 from pathlib import Path
 from huggingface_hub import hf_hub_download
 
@@ -14,6 +17,27 @@ SOURCES = {
 }
 
 
+@contextmanager
+def phase(label):
+    started = time.monotonic()
+    stop = threading.Event()
+    def report():
+        while not stop.wait(15):
+            print(f'[models] {label} - still active ({time.monotonic() - started:.0f}s)', flush=True)
+    print('[models] ' + label, flush=True)
+    worker = threading.Thread(target=report, daemon=True)
+    worker.start()
+    try:
+        yield
+    except Exception as error:
+        # Exception messages may contain signed download URLs.
+        print(f'[models] FAILED: {label} ({type(error).__name__})', flush=True)
+        raise
+    finally:
+        stop.set()
+        worker.join()
+
+
 def main():
     root = Path('/workspace/ComfyUI/models')
     manifest = {m['path'].removeprefix('ComfyUI/models/'): m for m in json.loads(
@@ -21,18 +45,22 @@ def main():
     status_path = Path('/tmp/hf_download_status.json')
     status = {name: {'status': 'pending'} for name in SOURCES}
     status_path.write_text(json.dumps(status))
-    for name, (repo, revision) in SOURCES.items():
+    for index, (name, (repo, revision)) in enumerate(SOURCES.items(), 1):
         model = manifest[name]
         target = root / name
         def valid():
             if not target.is_file() or target.stat().st_size != model['size']:
                 return False
-            with target.open('rb') as stream:
+            with phase(f'SHA-256 check: {name}'), target.open('rb') as stream:
                 return hashlib.file_digest(stream, 'sha256').hexdigest() == model['sha256']
+        print(f'[models] Helper {index}/{len(SOURCES)}: {name} ({model["size"] / 1024**3:.2f} GiB)', flush=True)
         if not valid():
             remote = Path(name).name if repo == 'lightx2v/Minimax-h3-Turbo' else name
             local = root / Path(name).parent if remote != name else root
-            hf_hub_download(repo, remote, revision=revision, local_dir=local, force_download=target.exists())
+            status[name]['status'] = 'downloading'
+            status_path.write_text(json.dumps(status))
+            with phase(f'Downloading {name} from {repo}'):
+                hf_hub_download(repo, remote, revision=revision, local_dir=local, force_download=target.exists())
             if not valid():
                 raise ValueError('Helper weight failed verification: ' + name)
         status[name]['status'] = 'done'

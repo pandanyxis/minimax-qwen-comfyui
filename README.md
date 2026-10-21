@@ -94,3 +94,5 @@ Template changes apply to new Pods. Generate a template with `python make_templa
 - Helper models: Comfy-Org/MiniMax-H3, lightx2v/Minimax-h3-Turbo, Kijai/MiniMax-H3-TAE.
 
 Model weights are downloaded at startup and remain subject to their upstream licenses and access requirements. The independent image must pass its build and CPU startup checks before deployment; GPU video generation requires a separate real Pod test.
+
+Startup logs label ComfyUI phases with `[comfy]` and Qwen phases with `[qwen]`. Helper-model logs show the file number, expected size, download/checksum phase and a heartbeat every 15 seconds during long operations. Civitai transfers report received GiB, percentage when the server supplies a total, and average MiB/s approximately every 15 seconds while chunks arrive. Service readiness is confirmed by the server listening messages.

@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
+trap 'echo "[comfy] FAILED at startup line $LINENO (exit $?)" >&2' ERR
+export PYTHONUNBUFFERED=1
+echo "[comfy] Step 1/4: downloading and verifying Hugging Face helper models"
 mkdir -p /workspace/ComfyUI/{models,input,output,temp,user}
 /opt/hf/bin/python /opt/combined/provision-helpers.py
+echo "[comfy] Step 2/4: downloading and verifying Civitai workflow models"
 /opt/venv/bin/python /opt/combined/provision-civitai.py /workspace/ComfyUI/models
+echo "[comfy] Step 3/4: preparing extra models"
 for pair in CIVITAI_CHECKPOINTS:checkpoints CIVITAI_LORAS:loras; do
   key="${pair%%:*}"
   folder="${pair#*:}"
@@ -25,6 +30,7 @@ personal:
   vae_approx: vae_approx
   custom_nodes: /ComfyUI/custom_nodes
 EOF
+echo "[comfy] Step 4/4: starting Jupyter (8888) and ComfyUI (8188); waiting for their ready messages"
 cd /ComfyUI
 pids=()
 cleanup() {
