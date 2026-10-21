@@ -41,7 +41,7 @@ RUN /opt/webui/bin/python -c "from importlib.metadata import version; import tor
 COPY --from=builder /opt/llama /opt/llama
 COPY start-qwen start-services.sh /usr/local/bin/
 COPY supervisor.py healthcheck.py bootstrap.py start-prebuilt.py cpu-smoke.py /opt/combined/
-COPY start-comfy.sh /opt/combined/start-comfy.sh
+COPY start-comfy.sh prepare-comfy.py /opt/combined/
 COPY workflow-*.json /opt/combined/
 COPY civitai-models.json provision-civitai.py download-civitai.py provision-helpers.py /opt/combined/
 COPY model-manifest.json download_progress.py download-qwen.py download-mirror.py mirror-to-hf.py /opt/combined/

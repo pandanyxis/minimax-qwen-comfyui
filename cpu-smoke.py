@@ -5,9 +5,14 @@ import subprocess
 import time
 import urllib.request
 
+subprocess.run(['/usr/bin/python3', '/opt/combined/prepare-comfy.py'], check=True)
+
 process = subprocess.Popen([
     '/opt/venv/bin/python', '/ComfyUI/main.py', '--cpu',
     '--listen', '127.0.0.1', '--port', '8188', '--disable-auto-launch',
+    '--base-directory', '/workspace/ComfyUI',
+    '--extra-model-paths-config', '/workspace/combined/model-paths.yaml',
+    '--disable-dynamic-vram', '--preview-method', 'taesd',
 ], cwd='/ComfyUI')
 try:
     deadline = time.monotonic() + 180

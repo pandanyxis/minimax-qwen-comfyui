@@ -3,7 +3,7 @@ set -Eeuo pipefail
 trap 'echo "[comfy] FAILED at startup line $LINENO (exit $?)" >&2' ERR
 export PYTHONUNBUFFERED=1
 echo "[comfy] Step 1/4: downloading and verifying Hugging Face helper models"
-mkdir -p /workspace/ComfyUI/{models,input,output,temp,user}
+/usr/bin/python3 /opt/combined/prepare-comfy.py
 /opt/hf/bin/python /opt/combined/provision-helpers.py
 echo "[comfy] Step 2/4: downloading and verifying Civitai workflow models"
 /opt/venv/bin/python /opt/combined/provision-civitai.py /workspace/ComfyUI/models
@@ -18,18 +18,7 @@ for pair in CIVITAI_CHECKPOINTS:checkpoints CIVITAI_LORAS:loras; do
       --identifier "${identifier// /}" --output "/workspace/ComfyUI/models/$folder"
   done
 done
-cat > /workspace/combined/model-paths.yaml <<'EOF'
-personal:
-  base_path: /workspace/ComfyUI/models
-  checkpoints: checkpoints
-  diffusion_models: diffusion_models
-  text_encoders: text_encoders
-  clip_vision: clip_vision
-  vae: vae
-  loras: loras
-  vae_approx: vae_approx
-  custom_nodes: /ComfyUI/custom_nodes
-EOF
+
 echo "[comfy] Step 4/4: starting Jupyter (8888) and ComfyUI (8188); waiting for their ready messages"
 cd /ComfyUI
 pids=()
