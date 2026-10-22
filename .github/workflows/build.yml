@@ -88,8 +88,8 @@ jobs:
             -d '{"email":"ci@example.com","password":"ci-only-password-12345"}' \
             | python3 -c 'import json,sys; r=json.load(sys.stdin); assert r.get("token") and r.get("role")=="admin"'
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/api/models)" = 401
-      - name: Publish v1.5 after successful smoke test
-        run: docker buildx imagetools create --tag ghcr.io/pandanyxis/minimax-qwen-comfyui:comfy-v1.5 ghcr.io/pandanyxis/minimax-qwen-comfyui@${{ steps.image.outputs.digest }}
+      - name: Publish v1.5 and latest after successful smoke test
+        run: docker buildx imagetools create --tag ghcr.io/pandanyxis/minimax-qwen-comfyui:comfy-v1.5 --tag ghcr.io/pandanyxis/minimax-qwen-comfyui:latest ghcr.io/pandanyxis/minimax-qwen-comfyui@${{ steps.image.outputs.digest }}
       - name: Record image digest
         run: |
           echo '### Combined image' >> "$GITHUB_STEP_SUMMARY"
