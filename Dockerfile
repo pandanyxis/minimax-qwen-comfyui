@@ -31,13 +31,9 @@ ENV PIP_CONSTRAINT=/opt/combined/torch-constraints.txt
 COPY torch-constraints.txt comfy-sources.json bake-comfy.py /opt/combined/
 RUN /opt/venv/bin/python /opt/combined/bake-comfy.py \
     && /opt/venv/bin/pip install --no-cache-dir jupyterlab==4.4.10 requests==2.32.5
-# Independent environments keep GPU ComfyUI and CPU WebUI dependencies separate.
+# Dedicated environment for Hugging Face downloads.
 RUN /usr/bin/python3 -m venv /opt/hf \
     && env -u PIP_CONSTRAINT /opt/hf/bin/pip install --no-cache-dir huggingface_hub==2.0.0 hf-xet==1.6.0
-RUN /usr/bin/python3 -m venv /opt/webui \
-    && env -u PIP_CONSTRAINT /opt/webui/bin/pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu \
-    && env -u PIP_CONSTRAINT /opt/webui/bin/pip install --no-cache-dir open-webui==0.12.3
-RUN /opt/webui/bin/python -c "from importlib.metadata import version; import torch; assert version('open-webui') == '0.12.3'; assert torch.version.cuda is None"
 COPY --from=builder /opt/llama /opt/llama
 COPY start-qwen start-services.sh /usr/local/bin/
 COPY supervisor.py healthcheck.py bootstrap.py start-prebuilt.py cpu-smoke.py /opt/combined/
@@ -51,14 +47,14 @@ RUN --mount=from=builder,source=/opt/cuda-link,target=/opt/cuda-link \
     && bash -n /usr/local/bin/start-qwen /usr/local/bin/start-services.sh /opt/combined/start-comfy.sh \
     && LD_LIBRARY_PATH=/opt/cuda-link:/opt/llama/lib:$LD_LIBRARY_PATH /opt/llama/bin/llama-server --version
 ENV PATH=/opt/venv/bin:$PATH
-ENV ENABLE_COMFYUI=true ENABLE_QWEN=true ENABLE_WEBUI=true CTX_SIZE=65536 \
+ENV ENABLE_COMFYUI=true ENABLE_QWEN=true CTX_SIZE=65536 \
     COMFY_START_SCRIPT=/opt/combined/start-comfy.sh \
     HF_HOME=/workspace/qwen-runpod/hf-cache HF_XET_HIGH_PERFORMANCE=1 \
     HF_XET_NUM_CONCURRENT_RANGE_GETS=32 HF_HUB_DOWNLOAD_TIMEOUT=60 HF_HUB_DISABLE_UPDATE_CHECK=1
 ENV HF_CIVITAI_MIRROR_REPO=Pandanyxis/comfyui-civitai-models \
     HF_CIVITAI_MIRROR_REVISION=b102a78d81a88ef84b187528cd1f0f92362b3644
 WORKDIR /workspace
-EXPOSE 8188 8080 3000 8888 22
+EXPOSE 8188 8080 8888 22
 HEALTHCHECK --interval=30s --timeout=15s --start-period=90m --retries=3 CMD ["/usr/bin/python3", "/opt/combined/healthcheck.py"]
 ENTRYPOINT ["/opt/nvidia/nvidia_entrypoint.sh"]
 CMD ["/usr/bin/python3", "-u", "/opt/combined/start-prebuilt.py"]

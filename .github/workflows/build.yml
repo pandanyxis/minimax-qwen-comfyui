@@ -48,7 +48,7 @@ jobs:
             ghcr.io/pandanyxis/minimax-qwen-comfyui:comfy-${{ github.sha }}
           labels: |
             org.opencontainers.image.source=https://github.com/pandanyxis/minimax-qwen-comfyui
-            org.opencontainers.image.description=ComfyUI Civitai MiniMax INT8 plus Qwen vision and Open WebUI
+            org.opencontainers.image.description=ComfyUI Civitai MiniMax INT8 plus Qwen vision API
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.version=1.5
           build-args: |
@@ -67,27 +67,6 @@ jobs:
           assert len(json.loads(Path("/opt/combined/comfy-sources.json").read_text())["nodes"]) == 3
           print("Independent runtime and selected models verified")'
           docker run --rm --entrypoint /opt/venv/bin/python ghcr.io/pandanyxis/minimax-qwen-comfyui:comfy-${{ github.sha }} /opt/combined/cpu-smoke.py
-      - name: Smoke test Open WebUI 0.12.3
-        run: |
-          docker run -d --name webui-smoke -p 3000:3000 --entrypoint /opt/webui/bin/open-webui \
-            -e DATA_DIR=/tmp/webui-test -e WEBUI_AUTH=true -e ENABLE_SIGNUP=false \
-            -e WEBUI_SECRET_KEY=ci-only-not-a-deployment-secret \
-            -e WEBUI_ADMIN_EMAIL=ci@example.com -e WEBUI_ADMIN_PASSWORD=ci-only-password-12345 \
-            -e ENABLE_OLLAMA_API=false -e RAG_EMBEDDING_ENGINE=openai \
-            ghcr.io/pandanyxis/minimax-qwen-comfyui:comfy-${{ github.sha }} serve --host 0.0.0.0 --port 3000
-          trap 'docker logs --tail 100 webui-smoke; docker rm -f webui-smoke' EXIT
-          ready=false
-          for i in $(seq 1 90); do
-            if curl -fsS http://127.0.0.1:3000/health; then ready=true; break; fi
-            sleep 5
-          done
-          test "$ready" = true
-          curl -fsS http://127.0.0.1:3000/ | grep -qi '<html'
-          curl -fsS http://127.0.0.1:3000/api/v1/auths/signin \
-            -H 'Content-Type: application/json' \
-            -d '{"email":"ci@example.com","password":"ci-only-password-12345"}' \
-            | python3 -c 'import json,sys; r=json.load(sys.stdin); assert r.get("token") and r.get("role")=="admin"'
-          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/api/models)" = 401
       - name: Publish v1.5 and latest after successful smoke test
         run: docker buildx imagetools create --tag ghcr.io/pandanyxis/minimax-qwen-comfyui:comfy-v1.5 --tag ghcr.io/pandanyxis/minimax-qwen-comfyui:latest ghcr.io/pandanyxis/minimax-qwen-comfyui@${{ steps.image.outputs.digest }}
       - name: Record image digest

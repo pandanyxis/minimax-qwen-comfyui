@@ -13,15 +13,11 @@ def enabled(name):
 
 
 def main():
-    comfy, qwen, webui = [enabled(n) for n in ("ENABLE_COMFYUI", "ENABLE_QWEN", "ENABLE_WEBUI")]
+    comfy, qwen = [enabled(n) for n in ("ENABLE_COMFYUI", "ENABLE_QWEN")]
     if not (comfy or qwen):
         raise SystemExit("Enable at least one service")
     if qwen and len(os.environ.get("LLAMA_API_KEY", "")) < 32:
         raise SystemExit("Set LLAMA_API_KEY to at least 32 random characters")
-    if qwen and webui:
-        password = os.environ.get("WEBUI_ADMIN_PASSWORD", "")
-        if not os.environ.get("WEBUI_ADMIN_EMAIL") or not (16 <= len(password) <= 72 and password.isascii()):
-            raise SystemExit("Set WEBUI_ADMIN_EMAIL and a 16-72 ASCII character WEBUI_ADMIN_PASSWORD")
     children = []
     stopping = False
 

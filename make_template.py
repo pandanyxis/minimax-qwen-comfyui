@@ -9,7 +9,7 @@ DEFAULT_IMAGE = 'ghcr.io/pandanyxis/minimax-qwen-comfyui:latest'
 
 def make(image=DEFAULT_IMAGE):
     env = {
-        'ENABLE_COMFYUI': 'true', 'ENABLE_QWEN': 'true', 'ENABLE_WEBUI': 'true',
+        'ENABLE_COMFYUI': 'true', 'ENABLE_QWEN': 'true',
         'CTX_SIZE': '65536',
         'HF_CIVITAI_MIRROR_REPO': 'Pandanyxis/comfyui-civitai-models',
         'HF_CIVITAI_MIRROR_REVISION': 'b102a78d81a88ef84b187528cd1f0f92362b3644',
@@ -21,6 +21,10 @@ def make(image=DEFAULT_IMAGE):
     settings = ROOT / 'runtime-settings.json'
     if settings.exists():
         env.update(json.loads(settings.read_text(encoding='utf-8')))
+    # Ignore removed UI settings from older private configurations.
+    for key in list(env):
+        if key == 'ENABLE_WEBUI' or key.startswith('WEBUI_'):
+            env.pop(key)
     # Extra Civitai fields remain configurable through runtime-settings.json.
     env['PERSIST_MODELS_TO_VOLUME'] = 'false'
     env.pop('GLOBAL_MODEL_CACHE_DIR', None)
@@ -29,7 +33,7 @@ def make(image=DEFAULT_IMAGE):
         'image': image,
         'disk': 200,
         'mounts': {},
-        'ports': ['8188/http', '8080/http', '3000/http', '8888/http', '22/tcp'],
+        'ports': ['8188/http', '8080/http', '8888/http', '22/tcp'],
         'env': env,
         'allowedCudaVersions': ['13.0', '13.1', '13.2', '13.3', '13.4'],
         'category': 'NVIDIA', 'serverless': False, 'public': False,

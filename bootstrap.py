@@ -23,17 +23,12 @@ def prepare_access():
     saved = json.loads(path.read_text()) if path.exists() else {}
     for key, fallback in {
         'LLAMA_API_KEY': lambda: secrets.token_hex(32),
-        'WEBUI_ADMIN_EMAIL': lambda: 'owner@pod.local',
-        'WEBUI_ADMIN_PASSWORD': lambda: secrets.token_urlsafe(32),
         'JUPYTER_TOKEN': lambda: secrets.token_hex(32),
     }.items():
         value = os.environ.get(key) or saved.get(key) or fallback()
         os.environ[key] = saved[key] = value
     if len(saved['LLAMA_API_KEY']) < 32:
         raise ValueError('LLAMA_API_KEY must contain at least 32 characters')
-    password = saved['WEBUI_ADMIN_PASSWORD']
-    if not (password.isascii() and 16 <= len(password) <= 72):
-        raise ValueError('WEBUI_ADMIN_PASSWORD must contain 16-72 ASCII characters')
     fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
     os.chmod(path, 0o600)
     with os.fdopen(fd, 'w') as handle:

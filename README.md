@@ -2,7 +2,7 @@
 
 Project owner and maintainer: [pandanyxis](https://github.com/pandanyxis).
 
-Prebuilt ComfyUI T2V/I2V, Qwen vision chat and Open WebUI on one Runpod GPU.
+Prebuilt ComfyUI T2V/I2V, Qwen vision API on one Runpod GPU.
 
 ## v1.0: temporary storage only
 
@@ -43,8 +43,6 @@ Set comma-separated identifiers in the Pod/template environment:
 | Variable | Purpose |
 |---|---|
 | `LLAMA_API_KEY` | Qwen API authentication, at least 32 random characters |
-| `WEBUI_ADMIN_EMAIL` | Open WebUI login |
-| `WEBUI_ADMIN_PASSWORD` | 16-72 ASCII characters |
 | `civitai_token` / `CIVITAI_TOKEN` | Required for Civitai downloads |
 | `HF_TOKEN` | Hugging Face access where needed |
 | `JUPYTER_TOKEN` | Jupyter authentication |
@@ -56,11 +54,10 @@ Replace `POD_ID` in these URLs:
 | Service | URL |
 |---|---|
 | ComfyUI | `https://POD_ID-8188.proxy.runpod.net` |
-| Open WebUI | `https://POD_ID-3000.proxy.runpod.net` |
 | Qwen API | `https://POD_ID-8080.proxy.runpod.net/v1` |
 | Jupyter | `https://POD_ID-8888.proxy.runpod.net` |
 
-Keep `ENABLE_COMFYUI=true`, `ENABLE_QWEN=true`, `ENABLE_WEBUI=true` and `PERSIST_MODELS_TO_VOLUME=false`. Set `ENABLE_QWEN=false` when generation needs the full GPU. Setting `ENABLE_WEBUI=false` disables only the chat interface. The built-in video model selections are pinned in the model manifests.
+Keep `ENABLE_COMFYUI=true`, `ENABLE_QWEN=true` and `PERSIST_MODELS_TO_VOLUME=false`. Set `ENABLE_QWEN=false` when generation needs the full GPU. The built-in video model selections are pinned in the model manifests.
 
 ## Your own runtime
 
@@ -82,7 +79,7 @@ Custom nodes and ComfyUI keep their own licenses in their source directories. Th
 
 ## Build and validation
 
-GitHub Actions builds `Dockerfile`, runs unit tests and a real Open WebUI startup/login smoke test, then publishes `comfy-v1.0` and a commit-specific image tag. Model weights download at Pod startup; software installation and CUDA compilation happen during image build. The health check validates required file sizes, pinned Civitai download status and enabled service endpoints. A completed Pod startup check is not a video-generation benchmark.
+GitHub Actions builds `Dockerfile`, runs unit tests and the ComfyUI CPU startup smoke test, then publishes `latest` and a commit-specific image tag. Model weights download at Pod startup; software installation and CUDA compilation happen during image build. The health check validates required file sizes, pinned Civitai download status and enabled service endpoints. A completed Pod startup check is not a video-generation benchmark.
 
 Template changes apply to new Pods. Generate a template with `python make_template.py`; local `runtime-settings.json` may supply private environment settings. No storage mount is generated.
 
@@ -102,4 +99,4 @@ Civitai connection errors, timeouts, interrupted streams, HTTP 408/429 and tempo
 Version `comfy-v1.4` downloads the three selected Civitai files from the private model repository `Pandanyxis/comfyui-civitai-models`, pinned to commit `b102a78d81a88ef84b187528cd1f0f92362b3644`. Supply a read token for that repository as `HF_TOKEN`. All original filenames, sizes and SHA-256 checks remain unchanged. Extra user-selected Civitai files still use Civitai. Override `HF_CIVITAI_MIRROR_REPO` and `HF_CIVITAI_MIRROR_REVISION` for another verified mirror, or set the repository variable to an empty string to use Civitai. `mirror-to-hf.py` creates private copies from already downloaded verified files; it uses a separate `HF_WRITE_TOKEN` only for uploading. Never put the write token in a template or image.
 
 
-New Runpod templates use `ghcr.io/pandanyxis/minimax-qwen-comfyui:latest`. GitHub Actions updates this tag only after the image checks and Open WebUI smoke test pass. Create a new Pod to use the updated image; existing Pods are not updated automatically. Commit-specific image tags remain available.
+New Runpod templates use `ghcr.io/pandanyxis/minimax-qwen-comfyui:latest`. GitHub Actions updates this tag only after the image checks and ComfyUI CPU smoke test pass. Create a new Pod to use the updated image; existing Pods are not updated automatically. Commit-specific image tags remain available.

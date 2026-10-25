@@ -34,8 +34,6 @@ def main():
                 raise SystemExit('Required ComfyUI model provisioning is incomplete')
     if os.environ.get('ENABLE_QWEN', 'true') == 'true':
         urls.append('http://127.0.0.1:8080/health')
-        if os.environ.get('ENABLE_WEBUI', 'true') == 'true':
-            urls.append('http://127.0.0.1:3000/health')
     for url in urls:
         with urllib.request.urlopen(url, timeout=4) as response:
             if response.status != 200:
