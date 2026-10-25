@@ -40,3 +40,14 @@ Wil je jouw aangepaste workflow bij elke nieuwe pod terugzien? Exporteer de JSON
 ## Meer geheugen voor video
 
 Met `ENABLE_QWEN=false` start de aparte Qwen-chatserver niet mee en blijft meer GPU-geheugen beschikbaar voor video. De Qwen3-VL-tekstencoder binnen de video-workflow blijft nodig. Een hogere resolutie of langere video vraagt meer geheugen en rekentijd.
+
+## Automatisch geheugen vrijgeven
+
+De image bevat `combined-auto-unload`. Na de laatste generatie in de wachtrij,
+ook bij een uitvoerfout, vraagt deze ComfyUI om modellen te unloaden en de
+uitvoeringscache te wissen. ComfyUI ruimt daarna ongebruikte objecten en GPU-cache
+op vanuit de uitvoeringsthread. Binnen een batch blijven modellen geladen;
+de volgende batch laadt ze opnieuw. Modelbestanden en opgeslagen resultaten
+blijven op schijf. Dit geldt voor alle workflows zonder extra canvasnodes.
+Bouw de image opnieuw en start ComfyUI met die image om dit op een bestaande pod
+te activeren.
